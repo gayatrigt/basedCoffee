@@ -23,7 +23,7 @@ export default async function handler(
   const { fid } = untrustedData;
 
   // For local testing, use localhost. For production, use your actual domain.
-  const baseUrl = 'https://bumpy-toes-turn.loca.lt'
+  const baseUrl = 'https://based-coffee-ca.vercel.app/'
 
   res.status(200).json({
     type: 'form',
