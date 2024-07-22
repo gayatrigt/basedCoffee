@@ -1,70 +1,99 @@
 import Image from "next/image";
 import { Inter } from "next/font/google";
+import { useState, useEffect, ChangeEvent, FormEvent } from "react";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export default function Home() {
+  const [goal, setGoal] = useState("");
+  const [amount, setAmount] = useState("");
+  const [fid, setFid] = useState<number | null>(null);
+
+  const createChannel = async (goal: string, fid: number, goalamt: number) => {
+    const response = await fetch('https://cryptocoffee-opal.vercel.app/api/create-row', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ goal, fid, goalamt }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to create channel');
+    }
+
+    return response.json();
+  };
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const fidParam = urlParams.get('fid');
+    if (fidParam) {
+      setFid(parseInt(fidParam));
+    }
+  }, []);
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (!fid) {
+      return;
+    }
+
+    try {
+      const { channel } = await createChannel(goal, fid, parseFloat(amount));
+
+      window.parent.postMessage({
+        type: "createCast",
+        data: {
+          cast: {
+            text: `Goal: ${goal}\nAmount: $${amount} USD`,
+            embeds: [`https://cryptocoffee-opal.vercel.app/frames/indi/fund/${channel.id}`]
+          }
+        }
+      }, "*");
+    } catch (error) {
+      console.error('Error creating channel:', error);
+    }
+  };
+
   return (
     <main
-      className={`flex min-h-screen flex-col items-center justify-between p-24 ${inter.className}`}
+      className={`flex min-h-screen flex-col items-center justify-between p-24 ${inter.className} bg-white dark:bg-gray-900 text-black dark:text-white`}
     >
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          uwu&nbsp;
-          <code className="font-mono font-bold">@samuellhuber</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://dtech.vision"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/dtech.png"
-              alt="dTech Logo"
-              // className="dark:invert"
-              width={100}
-              height={24}
-              priority
+      {/* ... (keep your existing header and logo sections) ... */}
+
+      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-1 lg:text-left">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="goal" className="block text-sm font-medium">Goal</label>
+            <input
+              type="text"
+              id="goal"
+              value={goal}
+              onChange={(e) => setGoal(e.target.value)}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 text-black dark:text-white bg-white dark:bg-gray-800"
+              required
             />
-          </a>
-        </div>
-      </div>
-
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-full sm:before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full sm:after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700/10 after:dark:from-sky-900 after:dark:via-[#0141ff]/40 before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/dtech.png"
-          alt="dTech Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <p>
-          Hello main test?
-        </p>
-        <button 
-          className="px-4 py-2 text-white bg-blue-500 rounded-md shadow-md hover:bg-blue-600"
-          onClick={() => {
-            window.parent.postMessage({
-              type: "createCast",
-              data: {
-                cast: {
-                  text: "dTech is the best!",
-                  embeds: ["https://dtech.vision"]
-                }
-              }
-            }, "*");
-          }}
-        >
-          Share
-        </button>
+          </div>
+          <div>
+            <label htmlFor="amount" className="block text-sm font-medium">Amount (USD)</label>
+            <input
+              type="number"
+              id="amount"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 text-black dark:text-white bg-white dark:bg-gray-800"
+              required
+            />
+          </div>
+          <button
+            type="submit"
+            className="px-4 py-2 text-white bg-blue-500 rounded-md shadow-md hover:bg-blue-600"
+          >
+            Create Goal
+          </button>
+        </form>
       </div>
     </main>
   );

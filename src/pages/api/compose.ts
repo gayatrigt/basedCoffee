@@ -1,16 +1,33 @@
-// Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from "next";
 
-export default function handler(
-  req: NextApiRequest,
-  res: NextApiResponse<ComposerActionFormResponse>,
-) {
-  const data = req.body;
-  console.log(data);
+type ComposerActionFormResponse = {
+  type: 'form';
+  title: string;
+  url: string;
+}
 
-  res.status(200).json({ 
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse<ComposerActionFormResponse>
+) {
+  if (req.method !== 'POST') {
+    return res.status(405).end(); // Method Not Allowed
+  }
+
+  const { untrustedData, trustedData } = req.body;
+
+  if (!untrustedData || !trustedData || typeof untrustedData.fid !== 'number') {
+    return res.status(400).json({ type: 'form', title: 'Error', url: 'http://localhost:3000/error' });
+  }
+
+  const { fid } = untrustedData;
+
+  // For local testing, use localhost. For production, use your actual domain.
+  const baseUrl = 'https://bumpy-toes-turn.loca.lt'
+
+  res.status(200).json({
     type: 'form',
     title: 'dTech.vision',
-    url: 'http://localhost:3000', // make sure this is your public URL e.g. http://localhost:3000 for local testing
-   });
+    url: `${baseUrl}?fid=${fid}`, // Include FID in the URL
+  });
 }
