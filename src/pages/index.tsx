@@ -7,7 +7,8 @@ const inter = Inter({ subsets: ["latin"] });
 export default function Home() {
   const [goal, setGoal] = useState("");
   const [amount, setAmount] = useState("");
-  const [fid, setFid] = useState<number | null>(479);
+  const [fid, setFid] = useState<number | null>();
+  const [isLoading, setIsLoading] = useState<boolean>(false)
 
   const createChannel = async (goal: string, fid: number, goalamt: number) => {
     const response = await fetch('/api/proxy-create-row', {
@@ -40,6 +41,7 @@ export default function Home() {
       return;
     }
 
+    setIsLoading(true)
     try {
       const { channel } = await createChannel(goal, fid, parseFloat(amount));
 
@@ -54,6 +56,8 @@ export default function Home() {
       }, "*");
     } catch (error) {
       console.error('Error creating channel:', error);
+    } finally {
+      setIsLoading(false)
     }
   };
 
@@ -86,12 +90,20 @@ export default function Home() {
               placeholder="1000"
             />
           </div>
-          <button
+
+          {!isLoading && <button
             type="submit"
-            className="w-full px-4 py-2 bg-blue-800 text-white rounded-lg hover:bg-blue-200 hover:text-blue-800 font-integral font-bold"
+
+            className="w-full px-4 py-2 bg-blue-800 text-white rounded-lg hover:bg-blue-200 hover:text-blue-800 font-integral font-bold duration-300 ease-in-out select-none"
           >
             Create a Campaign
-          </button>
+          </button>}
+
+          {isLoading && <div
+            className="w-full px-4 h-[40px] flex items-center justify-center bg-blue-800 text-white rounded-lg font-integral font-bold text-center"
+          >
+            <span className="loader"></span>
+          </div>}
         </form>
       </div>
     </main>
