@@ -28,7 +28,7 @@ export default async function handler(
       type: "composer",
       name: "BasedCoffee",
       icon: "rocket",
-      description: "Create a Crowd Fund",
+      description: "Fundraise and Donate",
       imageUrl: "https://based-coffee-ca.vercel.app/favicon.png",
       action: {
         type: "post"
